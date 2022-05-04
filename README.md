@@ -6,24 +6,24 @@
 - The source files should be orginized as follows:
 
       --Dataset_1/
-	--masks/
-	    --img1.png
-            --img2.png
+		--masks/
+		    --img1.png
+		    --img2.png
                     ...
-	--method1/
-	    --img1.png
-            --img2.png
+		--method1/
+		    --img1.png
+		    --img2.png
                     ...
       --Dataset_2/
-	--masks/
-	    --img1.png
-            --img2.png
+		--masks/
+		    --img1.png
+		    --img2.png
                     ...
-	--method1/
-	    --img1.png
-            --img2.png
-                    ...
-	...
+		--method1/
+		    --img1.png
+		    --img2.png
+			    ...
+		...
 
 - Evaluate your map by run: 
 
