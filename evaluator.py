@@ -4,14 +4,24 @@ import time
 import numpy as np
 import torch
 from torchvision import transforms
+from torchmetrics import JaccardIndex
 import scipy
 import scipy.ndimage
 from tqdm import tqdm
 threshold_sal, upper_sal, lower_sal = 0.5, 1, 0
 
+"""
+Adapted from git repo evaluator.py
+
+Add IoU measure
+"""
+
+## Re-do: skipped files if already exists but report the scores
+
 class Eval_thread():
-    def __init__(self, loader, method, dataset, output_dir, cuda):
+    def __init__(self, loader, edge_loader,method, dataset, output_dir, cuda):
         self.loader = loader
+        self.edge_loader = edge_loader
         self.method = method
         self.dataset = dataset
         self.cuda = cuda
@@ -26,19 +36,82 @@ class Eval_thread():
     def run(self):
         start_time = time.time()
         max_f, mean_f, adp_f = self.Eval_Fmeasure()
+        mean_relax_f = self.Eval_RelaxF()
         mae = self.Eval_MAE()
         s_alpha05 = self.Eval_Smeasure(alpha=0.5)
-        max_e, mean_e, adp_e = self.Eval_Emeasure()
+        #max_e, mean_e, adp_e = self.Eval_Emeasure()
         fbw = self.Eval_Fbw_measure()
-        #s_alpha07 = self.Eval_Smeasure(alpha=0.7)
+        max_e, mean_e, adp_e = 0,0,0
+        mean_iou = self.Eval_IOU()
 
         self.LOG('#[{:10} Dataset] [{:6} Method]# [{:.4f} mae], [{:.4f} max-fmeasure], [{:.4f} mean-fmeasure], [{:.4f} adp-fmeasure], [{:.4f} max-Emeasure], [{:.4f} mean-Emeasure], [{:.4f} adp-Emeasure], ' \
-                '[{:.4f} S-measure_alpha05], [{:.4f} Fbw-measure].\n'
-               .format(self.dataset, self.method, mae, max_f, mean_f,adp_f, max_e,mean_e,adp_e, s_alpha05, fbw))
+                '[{:.4f} S-measure_alpha05], [{:.4f} Fbw-measure], [{:.4f} mean_IoU], [{:.4f} relax-fmeasure].\n'
+               .format(self.dataset, self.method, mae, max_f, mean_f,adp_f, max_e,mean_e,adp_e, s_alpha05, fbw, mean_iou, mean_relax_f))
 
         return '[cost:{:.4f}s][{:6} Dataset] [{:6} Method] {:.4f} mae, {:.4f} max-fmeasure, {:.4f} mean-fmeasure, {:.4f} adp-fmeasure, {:.4f} max-Emeasure,' \
-               ' {:.4f} mean-Emeasure, {:.4f} adp-Emeasure, {:.4f} S-measure_alpha05, {:.4f} Fbw-measure\n'\
-               .format(time.time()-start_time, self.dataset, self.method, mae, max_f,mean_f,adp_f, max_e,mean_e,adp_e, s_alpha05, fbw)
+               ' {:.4f} mean-Emeasure, {:.4f} adp-Emeasure, {:.4f} S-measure_alpha05, {:.4f} Fbw-measure, {:.4f} mean_IoU, {:.4f} mean-relax-fmeasure \n'\
+               .format(time.time()-start_time, self.dataset, self.method, mae, max_f,mean_f,adp_f, max_e,mean_e,adp_e, s_alpha05, fbw, mean_iou, mean_relax_f)
+
+    def Eval_IOU(self):
+        fLog = open(self.logdir + '/' + self.dataset + '_' + self.method + '_IOU' + '.txt', 'w')
+        print('Eval [{:6}] Dataset [IOU] with [{}] Method.'.format(self.dataset, self.method))
+        avg_iou, img_num = 0.0, 0
+        with torch.no_grad():
+            trans = transforms.Compose([transforms.ToTensor()])
+            for pred, gt, img_id in tqdm(self.loader):
+                if self.cuda:
+                    pred = trans(pred).cuda()
+                    gt = trans(gt).type(torch.IntTensor).cuda()
+                else:
+                    pred = trans(pred)
+                    gt = trans(gt).type(torch.IntTensor)
+                
+                iou = self._eval_iou(pred,gt)
+                if iou == iou:  # for Nan
+                    avg_iou += iou
+                    img_num += 1
+                    # print("{} done".format(img_num))
+                    fLog.write(img_id + '  ' + str(iou.item()) + '\n')
+            avg_iou /= img_num
+            fLog.close()
+            print('\n')
+            return avg_iou.item()
+
+    def Eval_RelaxF(self):
+        fLog = open(self.logdir + '/' + self.dataset + '_' + self.method + '_relax_F' + '.txt', 'w')
+        print('Eval [{:6}] Dataset [relax-f-measure] with [{}] Method.'.format(self.dataset, self.method))
+        avg_relax_f_score, img_num = 0.0, 0
+        with torch.no_grad():
+            trans = transforms.Compose([transforms.ToTensor()])
+            for pred, gt, pred_dist, gt_dist, img_id in tqdm(self.edge_loader):
+                if self.cuda:
+                    pred = trans(pred).type(torch.IntTensor).cuda()
+                    gt = trans(gt).type(torch.IntTensor).cuda()
+
+                    pred_dist = trans(pred_dist).type(torch.FloatTensor).cuda()
+                    gt = trans(gt_dist).type(torch.FloatTensor).cuda()
+                else:
+                    pred = trans(pred).type(torch.IntTensor)
+                    gt = trans(gt).type(torch.IntTensor)
+
+                    pred_dist = trans(pred_dist).type(torch.FloatTensor)
+                    gt_dist = trans(gt_dist).type(torch.FloatTensor)
+
+                relax_f_score = None
+                try:
+                    relax_f_score = self._eval_relax_f_measure(pred,gt,pred_dist,gt_dist)
+                except:
+                    continue
+                
+                if relax_f_score == relax_f_score:  # for Nan
+                    avg_relax_f_score += relax_f_score
+                    img_num += 1
+                    # print("{} done".format(img_num))
+                    fLog.write(img_id + '  ' + str(relax_f_score.item()) + '\n')
+            avg_relax_f_score /= img_num
+            fLog.close()
+            print('\n')
+            return avg_relax_f_score.item()
 
     def Eval_MAE(self):
         fLog = open(self.logdir + '/' + self.dataset + '_' + self.method + '_MAE' + '.txt', 'w')
@@ -308,8 +381,13 @@ class Eval_thread():
             y_temp = (y_pred >= thlist[i]).float()
             tp = (y_temp * y).sum()
             prec[i], recall[i] = tp / (y_temp.sum() + 1e-20), tp / (y.sum() + 1e-20)
-
         return prec, recall
+    
+    def _eval_iou(self,y_pred,y):
+        jac = JaccardIndex(num_classes=2,threshold=0.5)
+        IoU_score = jac(y_pred,y)
+        return IoU_score 
+
     def _eval_adp_f_measure(self,y_pred,y):
         beta2=0.3
         thr=y_pred.mean()*2
@@ -323,6 +401,19 @@ class Eval_thread():
         if torch.isnan(adp_f_score):
             adp_f_score=0.0
         return adp_f_score
+    
+    def _eval_relax_f_measure(self,y_pred,y,y_pred_dist,y_dist):
+        buffer = 3
+        y_pred_buffer = y_pred.clone().detach()
+        y_pred_buffer[y_dist > buffer] = 0
+        precision_edge = torch.sum(y_pred_buffer) / (torch.sum(y_pred)+1e-8)
+
+        y_pred_buffer = y.clone().detach()
+        y_pred_buffer[y_pred_dist > buffer] = 0
+        recall_edge = torch.sum(y_pred_buffer) / (torch.sum(y)+1e-8)
+
+        f1_edge = (1 + 0.3) * precision_edge * recall_edge / (0.3 * precision_edge + recall_edge + 1e-8)
+        return f1_edge
     
     def _S_object(self, pred, gt):
         fg = torch.where(gt==0, torch.zeros_like(pred), pred)
