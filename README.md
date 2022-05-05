@@ -1,8 +1,13 @@
 # SOD_Evaluation_Metrics
 **A more complete python version (GPU) of the fast evaluation for salient object detection (with S-measure, Fbw measure, MAE, max/mean/adaptive F-measure, max/mean/adaptive E-measure, PRcurve and F-measure curve)**
 
-- A fork from zyjwuyan's repo adding IOU and Relax F-measure
-- Reorganize directory per dataset 
+- A fork from zyjwuyan's repo
+**Main Contribution**
+- adding IOU and Relax F-measure
+- reorganize directory per dataset 
+- enable dynamic query and storage of results with sqlite
+
+## Data Storage
 - The source files should be orginized as follows:
 
       --Dataset_1/
@@ -38,6 +43,11 @@
 - The format of the result file is shown as [this](./score/result.txt).
 
   `#[Dataset_Name] [Method_Name]# [value mae], [value max-fmeasure], [value mean-fmeasure], [value9 adp-fmeasure], [value max-Emeasure], [value mean-Emeasure], [value adp-Emeasure], [value S-measure_alpha05], [value Fbw-measure], [value relax-F-meausre], [value mean_IoU].`
+
+- Create Sqlite DB by running:
+     `python store_metrics.py`
+
+  Then, the sqlite database will be created and available as `metrics.db`
 
 - Draw the PR curve and F-measure Curve by run:
   
