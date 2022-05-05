@@ -94,10 +94,11 @@
         pages={248--255},
         year={2014}
       }
+
       @inproceedings{relaxFmeasure,
-	title = {BASNet: Boundary-Aware Salient Object Detection},
-	author = {Qin, Xuebin and Zhang, Zichen and Huang, Chenyang and Gao, Chao and Dehghan, Masood and Jagersand, Martin},
-	booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-	month = {June},
-	year = {2019}
+          title = {BASNet: Boundary-Aware Salient Object Detection},
+          author = {Qin, Xuebin and Zhang, Zichen and Huang, Chenyang and Gao, Chao and Dehghan, Masood and Jagersand, Martin},
+          booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+          month = {June},
+          year = {2019}
       }
