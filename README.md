@@ -4,9 +4,9 @@
 - A fork from zyjwuyan's repo
 
 ## Main Contribution
--- adding IOU and Relax F-measure
--- reorganize directory per dataset 
--- enable dynamic query and storage of results with sqlite
+- adding IOU and Relax F-measure
+- reorganize directory per dataset 
+- enable dynamic query and storage of results with sqlite
 
 ## Data Storage
 - The source files should be orginized as follows:
