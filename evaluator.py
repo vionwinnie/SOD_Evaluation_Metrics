@@ -89,7 +89,7 @@ class Eval_thread():
                     gt = trans(gt).type(torch.IntTensor).cuda()
 
                     pred_dist = trans(pred_dist).type(torch.FloatTensor).cuda()
-                    gt = trans(gt_dist).type(torch.FloatTensor).cuda()
+                    gt_dist = trans(gt_dist).type(torch.FloatTensor).cuda()
                 else:
                     pred = trans(pred).type(torch.IntTensor)
                     gt = trans(gt).type(torch.IntTensor)
@@ -384,7 +384,10 @@ class Eval_thread():
         return prec, recall
     
     def _eval_iou(self,y_pred,y):
-        jac = JaccardIndex(num_classes=2,threshold=0.5)
+	if self.cuda:
+	    jac = JaccardIndex(num_classes=2,threshold=0.5).cuda()
+	else:
+	    jac = JaccardIndex(num_classes=2,threshold=0.5)
         IoU_score = jac(y_pred,y)
         return IoU_score 
 

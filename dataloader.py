@@ -68,8 +68,11 @@ class EvalBoundaryDataset(data.Dataset):
             pred = pred.resize(gt.size, Image.BILINEAR)
 
         # Dark pixel = 0, Bright pixels = 1
-        gt[gt <= 2*np.mean(gt)] = 0
-        gt[gt > 2*np.mean(gt)] = 1
+	# Note: by experimentation, clipping at 127 works better
+        #gt[gt <= 2*np.mean(gt)] = 0
+        #gt[gt > 2*np.mean(gt)] = 1
+	gt[gt <= 127] = 0
+	gt[gt > 127] = 1
 
         pred[pred <= 127] = 0
         pred[pred > 127] = 1
