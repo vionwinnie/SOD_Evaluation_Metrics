@@ -71,8 +71,8 @@ class EvalBoundaryDataset(data.Dataset):
 	# Note: by experimentation, clipping at 127 works better
         #gt[gt <= 2*np.mean(gt)] = 0
         #gt[gt > 2*np.mean(gt)] = 1
-	gt[gt <= 127] = 0
-	gt[gt > 127] = 1
+        gt[gt <= 127] = 0
+        gt[gt > 127] = 1
 
         pred[pred <= 127] = 0
         pred[pred > 127] = 1

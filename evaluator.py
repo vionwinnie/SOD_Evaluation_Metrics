@@ -384,10 +384,10 @@ class Eval_thread():
         return prec, recall
     
     def _eval_iou(self,y_pred,y):
-	if self.cuda:
-	    jac = JaccardIndex(num_classes=2,threshold=0.5).cuda()
-	else:
-	    jac = JaccardIndex(num_classes=2,threshold=0.5)
+        if self.cuda:
+            jac = JaccardIndex(num_classes=2,threshold=0.5).cuda()
+        else:
+            jac = JaccardIndex(num_classes=2,threshold=0.5)
         IoU_score = jac(y_pred,y)
         return IoU_score 
 
