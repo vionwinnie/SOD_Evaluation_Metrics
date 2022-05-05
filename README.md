@@ -2,10 +2,11 @@
 **A more complete python version (GPU) of the fast evaluation for salient object detection (with S-measure, Fbw measure, MAE, max/mean/adaptive F-measure, max/mean/adaptive E-measure, PRcurve and F-measure curve)**
 
 - A fork from zyjwuyan's repo
-**Main Contribution**
-- adding IOU and Relax F-measure
-- reorganize directory per dataset 
-- enable dynamic query and storage of results with sqlite
+
+## Main Contribution
+-- adding IOU and Relax F-measure
+-- reorganize directory per dataset 
+-- enable dynamic query and storage of results with sqlite
 
 ## Data Storage
 - The source files should be orginized as follows:
